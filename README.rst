@@ -62,6 +62,35 @@ or by running pip in the git repository:
 
   $ pip install .
 
+Container image
+---------------
+
+The repository includes a Dockerfile for building a CPU image with PDF support.
+Docker images are Linux containers, so Apple Silicon Macs use the
+``linux/arm64`` image through Docker Desktop, Colima, or another Linux VM based
+runtime.
+
+Build a local image for the current platform:
+
+.. code-block:: console
+
+   $ docker build -t kraken:local .
+
+Build and push a multi-architecture image:
+
+.. code-block:: console
+
+   $ docker buildx build \
+       --platform linux/amd64,linux/arm64 \
+       -t ghcr.io/OWNER/kraken:TAG \
+       --push .
+
+Run kraken from the image:
+
+.. code-block:: console
+
+   $ docker run --rm -v "$PWD:/work" kraken:local --help
+
 If you want direct PDF and multi-image TIFF/JPEG2000 support it is necessary to
 install the `pdf` extras package for PyPi:
 
@@ -173,5 +202,4 @@ kraken is developed at the `École Pratique des Hautes Études <https://www.ephe
         Ce travail a bénéficié d’une aide de l’État gérée par l’Agence Nationale de la
         Recherche au titre du Programme d’Investissements d’Avenir portant la référence
         ANR-21-ESRE-0005 (Biblissima+).
-
 

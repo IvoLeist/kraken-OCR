@@ -1,0 +1,16 @@
+.git
+.agents
+.codex
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.tox
+.venv
+venv
+build
+dist
+*.egg-info
+__pycache__
+*.py[cod]
+.DS_Store
+docs/_build

@@ -38,8 +38,11 @@ from kraken.lib.exceptions import KrakenInvalidModelException
 root_logger = logging.getLogger()
 level = root_logger.getEffectiveLevel()
 root_logger.setLevel(logging.ERROR)
-from coremltools.models import MLModel, datatypes  # NOQA
-from coremltools.models.neural_network import NeuralNetworkBuilder  # NOQA
+try:
+    from coremltools.models import MLModel, datatypes  # NOQA
+    from coremltools.models.neural_network import NeuralNetworkBuilder  # NOQA
+except ImportError:
+    MLModel = datatypes = NeuralNetworkBuilder = None
 root_logger.setLevel(level)
 
 # all tensors are ordered NCHW, the "feature" dimension is C, so the output of
@@ -48,6 +51,13 @@ root_logger.setLevel(level)
 __all__ = ['TorchVGSLModel']
 
 logger = logging.getLogger(__name__)
+
+
+def _require_coremltools():
+    if MLModel is None:
+        raise RuntimeError('CoreML model loading and export requires coremltools, '
+                           'which is not available for this platform.')
+    return MLModel, datatypes, NeuralNetworkBuilder
 
 
 class VGSLBlock:
@@ -289,7 +299,7 @@ class TorchVGSLModel(nn.Module,
         if isinstance(path, PathLike):
             path = path.as_posix()
         try:
-            mlmodel = MLModel(path)
+            mlmodel = _require_coremltools()[0](path)
         except TypeError as e:
             raise KrakenInvalidModelException(str(e)) from e
         except DecodeError as e:
@@ -404,11 +414,12 @@ class TorchVGSLModel(nn.Module,
         Args:
             path: Target destination
         """
+        mlmodel_cls, coreml_datatypes, builder_cls = _require_coremltools()
         warnings.warn('`TorchVGSLModel.save_model` is deprecated and will be removed '
                       'with kraken 8. Use `kraken.models.write_models` instead.', DeprecationWarning)
-        inputs = [('input', datatypes.Array(*self.input))]
-        outputs = [('output', datatypes.Array(*self.output))]
-        net_builder = NeuralNetworkBuilder(inputs, outputs)
+        inputs = [('input', coreml_datatypes.Array(*self.input))]
+        outputs = [('output', coreml_datatypes.Array(*self.output))]
+        net_builder = builder_cls(inputs, outputs)
         input = 'input'
         prev_device = next(self.nn.parameters()).device
         try:
@@ -431,7 +442,7 @@ class TorchVGSLModel(nn.Module,
                 finally:
                     self.aux_layers.to(prev_aux_device)
 
-            mlmodel = MLModel(net_builder.spec)
+            mlmodel = mlmodel_cls(net_builder.spec)
             mlmodel.short_description = 'kraken model'
             if getattr(self, 'codec', None):
                 mlmodel.user_defined_metadata['codec'] = json.dumps(self.codec.c2l)

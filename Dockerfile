@@ -63,5 +63,4 @@ RUN python -m pip install --no-index --find-links=/wheels "kraken[pdf]" && \
     rm -rf /wheels
 
 WORKDIR /work
-ENTRYPOINT ["kraken"]
-CMD ["--help"]
+CMD ["sh"]

@@ -57,6 +57,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     rm -rf /var/lib/apt/lists/*
 
 COPY --from=wheelhouse /wheels /wheels
+
+RUN python -m pip install coremltools
 RUN python -m pip install --no-index --find-links=/wheels "kraken[pdf]" && \
     rm -rf /wheels
 

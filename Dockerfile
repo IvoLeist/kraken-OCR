@@ -62,5 +62,9 @@ RUN python -m pip install coremltools
 RUN python -m pip install --no-index --find-links=/wheels "kraken[pdf]" && \
     rm -rf /wheels
 
+WORKDIR /ocr_models
+COPY ocr_models/*.mlmodel ./
+
 WORKDIR /work
+
 CMD ["sh"]

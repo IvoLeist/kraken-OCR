@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-slim-bookworm
+
+# ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+#     PIP_NO_CACHE_DIR=1 \
+
+ENV UV_SYSTEM_PYTHON=1 \
+    UV_NO_CACHE=1 \
+    UV_HTTP_TIMEOUT=300 
+    # PYTHONDONTWRITEBYTECODE=1 \
+    # PYTHONUNBUFFERED=1 
+    # USER=galaxy \
+    # LOGNAME=galaxy \
+    # HOME=/tmp
+
+WORKDIR /opt
+
+RUN python -m pip install uv
+
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv pip install kraken[pdf]
+
+COPY ocr_models/*.mlmodel /opt/ocr_models/
+
+WORKDIR /work
+CMD ["sh"]
